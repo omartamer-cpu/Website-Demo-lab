@@ -1,0 +1,11 @@
+{% extends 'base.html' %}{% block content %}
+<section class="card auth"><p class="eyebrow">YOUR PERSONAL SPACE</p><h1>{{ 'Create your account' if registering else 'Welcome back' }}</h1><p class="muted">{{ 'Keep your tasks together and make room for progress.' if registering else 'Log in to pick up where you left off.' }}</p>
+<form method="post" novalidate data-form="{{ 'register' if registering else 'login' }}">
+<input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+{% if errors.get('general') %}<p class="error" role="alert">{{ errors.general }}</p>{% endif %}
+{% if registering %}<label for="name">Name</label><input id="name" name="name" value="{{ name }}" autocomplete="name"><p class="error" data-error="name">{{ errors.get('name','') }}</p>{% endif %}
+<label for="email">Email</label><input id="email" type="email" name="email" value="{{ email }}" autocomplete="email"><p class="error" data-error="email">{{ errors.get('email','') }}</p>
+<label for="password">Password</label><input id="password" type="password" name="password" autocomplete="{{ 'new-password' if registering else 'current-password' }}"><p class="error" data-error="password">{{ errors.get('password','') }}</p>
+{% if registering %}<label for="confirm_password">Confirm password</label><input id="confirm_password" type="password" name="confirm_password" autocomplete="new-password"><p class="error" data-error="confirm_password">{{ errors.get('confirm_password','') }}</p>{% endif %}
+<button class="primary wide" type="submit">{{ 'Create account' if registering else 'Log in' }}</button></form>
+<p class="switch">{{ 'Already have an account?' if registering else 'New here?' }} <a href="{{ url_for('login' if registering else 'register') }}">{{ 'Log in' if registering else 'Create an account' }}</a></p></section>{% endblock %}
