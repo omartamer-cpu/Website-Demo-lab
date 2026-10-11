@@ -1,124 +1,156 @@
-# My Tasks — Database Lab 2
+# Database Lab 2 — My Tasks
+
+A website where users can create an account, log in, and manage their own tasks.
 
 ## Team
-- Name: **FILL IN YOUR NAME**
-- Student ID: **FILL IN YOUR ID**
-- Contributions: **Describe what you implemented and reviewed.**
-- If working with a partner, add their name, ID, and contributions. Both members must have commits.
 
-## Technologies
-Python / Flask backend; HTML, CSS, JavaScript and Jinja templates; MySQL database; PyMySQL with plain parameterized SQL; bcrypt password hashing; Flask-Session with a local server-side cache.
+| Name | Student ID | Work |
+|---|---|---|
+| Omar Tamer Helmy | 2304084 | Database, backend, login system, task features, and initial page design |
+| Mohammed Elsayed | 2304061 | Planned: testing, screenshots, and README updates |
 
-## Windows setup (PowerShell)
-1. Install Python, MySQL Server, MySQL Workbench, and Git. MySQL Server must be running.
-2. Extract this project and open its folder in VS Code. Open Terminal → New Terminal.
-3. Create the environment and install dependencies:
-   ```powershell
-   python -m venv .venv
-   .\.venv\Scripts\python.exe -m pip install -r requirements.txt
-   ```
-   No environment activation is needed.
-4. In MySQL Workbench, connect to your server. Open `database/schema.sql` and run the whole script. **This deletes existing data in registration. If you already created the same tables, skip this step.**
-5. Copy the example configuration:
-   ```powershell
-   Copy-Item .env.example .env
-   ```
-6. Edit `.env`: enter your MySQL password and username. Do not share or commit this file. Generate a session secret:
-   ```powershell
-   .\.venv\Scripts\python.exe -c "import secrets; print(secrets.token_hex(32))"
-   ```
-   Copy the printed value into `SECRET_KEY` in `.env`.
-7. Check the database:
-   ```powershell
-   .\.venv\Scripts\python.exe test_db.py
-   ```
-   Expected: `Connected successfully!`, `todos`, `users`.
-8. Start the server:
-   ```powershell
-   .\.venv\Scripts\python.exe app.py
-   ```
-9. Open http://127.0.0.1:5000 in your browser. Keep the terminal open. Ctrl+C stops the server.
+Update Mohammed's row after he completes his work.
 
-If you already have `.venv`, reuse it. Keep your existing `.env` credentials, but add `SECRET_KEY`. If port 5000 is occupied, stop the other server or change the port in `app.py`.
+## Tools used
 
-## Features (R1–R10)
-- R1: registration; duplicate email feedback; automatic login after registration.
-- R2: login with a single invalid-credentials message; logout.
-- R3: private lists, newest first, separate for each user.
-- R4–R7: add, edit, mark done/open, delete after confirmation.
-- R8: browser and server validation, exact required messages.
-- R9: bcrypt hashes, SQL parameters, user ID from the session.
-- R10: consistent responsive design, empty state, feedback, user name and logout.
-- Additional protection: CSRF tokens and session regeneration at login.
-- No bonus is claimed.
+- Python and Flask
+- MySQL and PyMySQL
+- HTML, CSS, and JavaScript
+- bcrypt for password hashing
+- Flask-Session for server-side sessions
 
-## Required screenshots — add these before submission
-Store real screenshots from your running application in `screenshots/` with these filenames. Images appear below once you add them.
+## Features
 
-### Register with errors
-![Register errors](screenshots/register-errors.png)
+- Register an account and log in automatically (R1).
+- Log in and log out (R2).
+- Each user sees only their own tasks, with newest tasks first (R3).
+- Add, edit, mark tasks done or open, and delete with confirmation (R4–R7).
+- Check form inputs in the browser and on the server (R8).
+- Use password hashes, parameterized SQL, and ownership checks (R9).
+- Support desktop and mobile screens, with feedback and an empty list message (R10).
 
-### Login
-![Login](screenshots/login.png)
+No bonus features are claimed.
 
-### List with tasks, including one completed
-![Tasks](screenshots/tasks.png)
+## How to run on Windows
 
-### Phone-sized view (360 pixels wide)
-![Mobile](screenshots/mobile.png)
+Install Python and MySQL Server first. Make sure MySQL Server is running.
 
-Use Chrome/Edge F12, then Ctrl+Shift+M and set width 360. Capture the site, not passwords or `.env`.
+### 1. Download the project
 
-## Questions
-**(a) Why AND user_id in UPDATE/DELETE?**
-It restricts the change to a task owned by the logged-in user. Without it, a user could submit another person's task ID and edit/delete their task. The owner ID must come from the session, not the browser.
+The project files are on the Back-end branch:
 
-**(b) What if a task references a missing user?**
-MySQL rejects the INSERT because the foreign key requires a matching users.user_id. This is referential integrity.
-
-**(c) Why a hash instead of the password?**
-A password hash allows password verification without storing the original password. bcrypt adds a salt and intentionally expensive processing, making stolen hashes harder to crack. Hashing is not reversible encryption.
-
-**(d) Why check an empty name when NOT NULL is present?**
-NOT NULL rejects NULL, but accepts an empty string. The application must reject empty names and names containing only spaces.
-
-## Manual checks before submission
-- Open /todos while logged out: redirected to login.
-- Submit empty registration: every required-field message appears; repeat with JavaScript disabled to check the server.
-- Register a duplicate email: Email Already Exists.
-- Unknown email and wrong password: Invalid email or password.
-- Try `' OR '1'='1' --` as email: no login.
-- Register two users using normal and incognito windows. Their tasks must remain separate.
-- In browser developer tools, change an edit/delete form action to another user's task ID, keeping the current user's CSRF token: the other user's task must not change.
-- Empty/spaces-only title and 201-character title: rejected; no database change.
-- Add, edit, toggle, cancel delete, confirm delete; logout and revisit /todos.
-- Inspect `SELECT password_hash FROM registration.users;`: only hashes, never original passwords.
-- Check at 360px width and on laptop.
-- Restart the app and confirm data remains in MySQL.
-
-## GitHub submission
-Create a GitHub repository without initializing a README, then run from this project folder:
 ```powershell
-git init
-git add .
-git commit -m "Add login and personal tasks application"
-git branch -M main
-git remote add origin https://github.com/YOUR_USERNAME/YOUR_REPOSITORY.git
-git push -u origin main
+git clone --branch Back-end https://github.com/omartamer-cpu/Website-Demo-lab.git
+cd Website-Demo-lab
 ```
-Replace the URL. Commit incrementally as you review and customize; do not invent contribution history. If private, share with the TA usernames they provide. Check `.env` is not tracked (`git ls-files .env` should print nothing). Submit the repository URL through the course submission method.
 
-## Reading the code
-- `app.py`: routes, validation, hashing, database access, and sessions.
-- `templates/auth.html`: reusable register/login page.
-- `templates/todos.html`: task forms and list.
-- `static/validation.js`: browser validation and delete confirmation.
-- `static/style.css`: appearance and phone layout.
-- `database/schema.sql`: creates the two tables and their constraints.
+### 2. Install the packages
 
-GET shows a page. POST processes a form. Successful POSTs redirect, avoiding duplicate submissions on refresh. PyMySQL uses `%s` rather than the handout's `?` placeholders, passing values separately. `query(..., write=True)` commits a database change; SELECT returns rows. Learn each route and customize this project so you can explain it to your TA.
+```powershell
+python -m venv .venv
+.\.venv\Scripts\python.exe -m pip install -r requirements.txt
+```
 
-Delete confirmation uses browser JavaScript; keep JavaScript enabled for the normal application. With JavaScript disabled, server validation still works, but the confirmation dialog does not appear.
+### 3. Set up the database
 
-## Verification status
-See `VERIFICATION.txt` for checks actually performed in the preparation environment. MySQL integration, browser screenshots, and final setup on your Windows machine still need verification.
+Open `database/schema.sql` in MySQL Workbench and run it.
+
+Only do this for a new setup. Running it again deletes the existing database, including accounts and tasks.
+
+### 4. Add your settings
+
+```powershell
+Copy-Item .env.example .env
+```
+
+Open `.env` and enter your MySQL username and password.
+
+Generate a secret key:
+
+```powershell
+.\.venv\Scripts\python.exe -c "import secrets; print(secrets.token_hex(32))"
+```
+
+Paste the result into `SECRET_KEY` in `.env`.
+
+Keep `.env` private. It is excluded from Git.
+
+### 5. Start the website
+
+```powershell
+.\.venv\Scripts\python.exe app.py
+```
+
+Open http://127.0.0.1:5000 in your browser.
+
+Keep the terminal open while using the website. Press Ctrl+C to stop it.
+
+## Screenshots
+
+### Registration errors
+![Registration errors](screenshots/register-errors.png)
+
+### Login page
+![Login page](screenshots/login.png)
+
+### Task list with a completed task
+![Task list](screenshots/tasks.png)
+
+### Mobile view at 360px
+![Mobile view](screenshots/mobile.png)
+
+## Lab questions
+
+### Why include user_id in UPDATE and DELETE?
+
+It makes sure users can only change or delete their own tasks. The user ID comes from the login session.
+
+### What happens if a task refers to a user who does not exist?
+
+MySQL rejects it because of the foreign key. Every task must belong to an existing user.
+
+### Why store a password hash?
+
+The website can check passwords without saving the original password. bcrypt makes the hashes harder to crack.
+
+### Why validate an empty name if the column uses NOT NULL?
+
+NOT NULL prevents a NULL value, but it still allows an empty string. The website also checks for empty names and spaces.
+
+## Testing
+
+The following checks passed during manual testing:
+
+- Registration errors and duplicate emails.
+- Login, wrong passwords, and logout.
+- Redirecting logged-out users away from the task page.
+- Adding, editing, completing, and deleting tasks.
+- Cancelling a deletion.
+- Rejecting empty and spaces-only task titles.
+- Keeping each account's tasks separate.
+- Keeping saved changes after refreshing.
+
+Remaining checks before submission:
+
+- Validation with JavaScript disabled.
+- Titles longer than 200 characters.
+- Attempts to edit or delete another user's task directly.
+- SQL injection input and stored password hashes.
+- Final mobile layout and screenshot links.
+
+## Main files
+
+| File | Purpose |
+|---|---|
+| app.py | Backend, database queries, login, and task actions |
+| database/schema.sql | Database tables and keys |
+| templates/ | Website pages |
+| static/style.css | Page design |
+| static/validation.js | Form checks and delete confirmation |
+| .env.example | Example settings |
+
+## Repository
+
+https://github.com/omartamer-cpu/Website-Demo-lab/tree/Back-end
+
+The project is on the Back-end branch. If the repository is private, give the instructor access before submission.
