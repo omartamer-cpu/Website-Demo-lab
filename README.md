@@ -6,10 +6,8 @@ A website where users can create an account, log in, and manage their own tasks.
 
 | Name | Student ID | Work |
 |---|---|---|
-| Omar Tamer Helmy | 2304084 | Database, backend, login system, task features, and initial page design |
-| Mohammed Elsayed | 2304061 | Planned: testing, screenshots, and README updates |
-
-Update Mohammed's row after he completes his work.
+| Omar Tamer Helmy | 2304084 | App , Gitignore , requiremnts , front end (Static) , Readme , Templates |
+| Mohammed Elsayed | 2304061 | Schema , Test and Validation , Enviroment |
 
 ## Tools used
 
