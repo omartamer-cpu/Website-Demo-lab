@@ -95,7 +95,7 @@ Keep the terminal open while using the website. Press Ctrl+C to stop it.
 ![Task list](Screenshots/tasks.png)
 
 ### Mobile view at 360px
-![Mobile view](Screenshots/mobile.png)
+![Mobile view](Screenshots/Mobile.png)
 
 ## Lab questions
 
