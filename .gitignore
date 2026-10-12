@@ -4,3 +4,4 @@ __pycache__/
 instance/
 flask_session/
 database/Schema.sql.txt
+VERIFICATION.txt
