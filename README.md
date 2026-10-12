@@ -86,16 +86,16 @@ Keep the terminal open while using the website. Press Ctrl+C to stop it.
 ## Screenshots
 
 ### Registration errors
-![Registration errors](Screenshots/register-errors.png)
+![Registration errors](https://github.com/omartamer-cpu/Website-Demo-lab/blob/Back-end/Screenshots/register-errors.png?raw=true)
 
 ### Login page
-![Login page](Screenshots/login.png)
+![Login page](https://github.com/omartamer-cpu/Website-Demo-lab/blob/Back-end/Screenshots/login.png?raw=true)
 
-### Task list with a completed task
-![Task list](Screenshots/tasks.png)
+### Task list
+![Task list](https://github.com/omartamer-cpu/Website-Demo-lab/blob/Back-end/Screenshots/tasks.png?raw=true)
 
-### Mobile view at 360px
-![Mobile view](Screenshots/Mobile.png)
+### Mobile view
+![Mobile view](https://github.com/omartamer-cpu/Website-Demo-lab/blob/Back-end/Screenshots/mobile.png?raw=true)
 
 ## Lab questions
 
