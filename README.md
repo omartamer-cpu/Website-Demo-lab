@@ -137,9 +137,6 @@ The following checks passed during manual testing:
 - Final mobile layout and screenshot links.
 - Validation with JavaScript disabled.
 - Titles longer than 200 characters.
-
-Remaining checks before submission:
-
 - Attempts to edit or delete another user's task directly.
 
 ## Main files
