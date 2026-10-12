@@ -102,6 +102,9 @@ Keep the terminal open while using the website. Press Ctrl+C to stop it.
 
 ## Lab questions
 
+(a)- Without AND user_id, a user could edit or delete another user's task by submitting its ID.
+(b)- This is the referential integrity constraint.
+
 ### Why include user_id in UPDATE and DELETE?
 
 It makes sure users can only change or delete their own tasks. The user ID comes from the login session.
@@ -130,14 +133,14 @@ The following checks passed during manual testing:
 - Rejecting empty and spaces-only task titles.
 - Keeping each account's tasks separate.
 - Keeping saved changes after refreshing.
+- SQL injection input and stored password hashes.
+- Final mobile layout and screenshot links.
+- Validation with JavaScript disabled.
+- Titles longer than 200 characters.
 
 Remaining checks before submission:
 
-- Validation with JavaScript disabled.
-- Titles longer than 200 characters.
 - Attempts to edit or delete another user's task directly.
-- SQL injection input and stored password hashes.
-- Final mobile layout and screenshot links.
 
 ## Main files
 
