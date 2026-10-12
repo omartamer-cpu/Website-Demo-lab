@@ -86,16 +86,16 @@ Keep the terminal open while using the website. Press Ctrl+C to stop it.
 ## Screenshots
 
 ### Registration errors
-![Registration errors](screenshots/register-errors.png)
+![Registration errors](Screenshots/register-errors.png)
 
 ### Login page
-![Login page](screenshots/login.png)
+![Login page](Screenshots/login.png)
 
 ### Task list with a completed task
-![Task list](screenshots/tasks.png)
+![Task list](Screenshots/tasks.png)
 
 ### Mobile view at 360px
-![Mobile view](screenshots/mobile.png)
+![Mobile view](Screenshots/mobile.png)
 
 ## Lab questions
 
