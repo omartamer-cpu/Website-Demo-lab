@@ -31,7 +31,9 @@ A website where users can create an account, log in, and manage their own tasks.
 
 ## How to run on Windows
 
-Install Python and MySQL Server first. Make sure MySQL Server is running.
+Install Python, Git, MySQL Server, and MySQL Workbench first. Make sure MySQL Server is running.
+(a)- Without AND user_id, a user could edit or delete another user's task by submitting its ID.
+(b)- This is the referential integrity constraint.
 
 ### 1. Download the project
 
