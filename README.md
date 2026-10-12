@@ -26,8 +26,9 @@ A website where users can create an account, log in, and manage their own tasks.
 - Check form inputs in the browser and on the server (R8).
 - Use password hashes, parameterized SQL, and ownership checks (R9).
 - Support desktop and mobile screens, with feedback and an empty list message (R10).
+- Bonus features: dark mode with a saved preference, and All / Open / Done task filters.
 
-No bonus features are claimed.
+
 
 ## How to run on Windows
 
