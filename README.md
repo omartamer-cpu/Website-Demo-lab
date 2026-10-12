@@ -95,7 +95,7 @@ Keep the terminal open while using the website. Press Ctrl+C to stop it.
 ![Task list](https://github.com/omartamer-cpu/Website-Demo-lab/blob/Back-end/Screenshots/tasks.png?raw=true)
 
 ### Mobile view
-![Mobile view](https://github.com/omartamer-cpu/Website-Demo-lab/blob/Back-end/Screenshots/mobile.png?raw=true)
+![Mobile view](https://github.com/omartamer-cpu/Website-Demo-lab/blob/Back-end/Screenshots/Mobile.png?raw=true)
 
 ## Lab questions
 
