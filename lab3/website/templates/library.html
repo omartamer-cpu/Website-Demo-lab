@@ -1,0 +1,193 @@
+{% extends "base.html" %}
+
+{% block content %}
+<h1>Library</h1>
+{% for message in get_flashed_messages() %}
+<p>{{ message }}</p>
+{% endfor %}
+
+<h2>Add Author</h2>
+<form method="post" action="{{ url_for('add_author') }}">
+    <input type="hidden" name="csrf_token"
+           value="{{ csrf_token() }}">
+
+    <label for="author-name">Name</label>
+    <input id="author-name" name="name"
+           maxlength="100" required>
+
+    <label for="author-country">Country</label>
+    <input id="author-country" name="country"
+           maxlength="100">
+
+    <button type="submit">Add Author</button>
+</form>
+
+<h2>Authors</h2>
+{% for message in get_flashed_messages() %}
+<p>{{ message }}</p>
+{% endfor %}
+
+<table>
+    <thead>
+        <tr>
+            <th>Author ID</th>
+            <th>Name</th>
+            <th>Country</th>
+            <th>Actions</th>
+        </tr>
+    </thead>
+    <tbody>
+        {% for author in authors %}
+        <tr>
+            <td>
+                {{ author.author_id }}
+                <form id="edit-author-{{ author.author_id }}"
+                      method="post"
+                      action="{{ url_for('edit_author',
+                                         author_id=author.author_id) }}">
+                    <input type="hidden" name="csrf_token"
+                           value="{{ csrf_token() }}">
+                </form>
+            </td>
+            <td>
+                <input form="edit-author-{{ author.author_id }}"
+                       name="name" value="{{ author.name }}"
+                       maxlength="100" required
+                       aria-label="Author name">
+            </td>
+            <td>
+                <input form="edit-author-{{ author.author_id }}"
+                       name="country" value="{{ author.country or '' }}"
+                       maxlength="100"
+                       aria-label="Author country">
+            </td>
+            <td>
+                <button type="submit"
+                        form="edit-author-{{ author.author_id }}">
+                    Save
+                </button>
+
+                <form method="post"
+                      action="{{ url_for('delete_author',
+                                         author_id=author.author_id) }}"
+                      onsubmit="return confirm('Delete this author and ALL their books?');">
+                    <input type="hidden" name="csrf_token"
+                           value="{{ csrf_token() }}">
+                    <button type="submit">Delete</button>
+                </form>
+            </td>
+        </tr>
+        {% endfor %}
+    </tbody>
+</table>
+<table>
+    <thead>
+        <tr>
+            <th>Author ID</th>
+            <th>Name</th>
+            <th>Country</th>
+        </tr>
+    </thead>
+    <tbody>
+        {% for author in authors %}
+        <tr>
+            <td>{{ author.author_id }}</td>
+            <td>{{ author.name }}</td>
+            <td>{{ author.country }}</td>
+        </tr>
+        {% endfor %}
+    </tbody>
+</table>
+<h2>Add Book</h2>
+<form method="post" action="{{ url_for('add_book') }}">
+    <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+
+    <label for="book-title">Title</label>
+    <input id="book-title" name="title" maxlength="200" required>
+
+    <label for="book-price">Price</label>
+    <input id="book-price" name="price" type="number"
+           min="0" max="99999999.99" step="0.01" required>
+
+    <label for="book-author">Author</label>
+    <select id="book-author" name="author_id" required>
+        <option value="">Choose an author</option>
+        {% for author in authors %}
+        <option value="{{ author.author_id }}">
+            {{ author.author_id }} — {{ author.name }}
+        </option>
+        {% endfor %}
+    </select>
+
+    <button type="submit">Add Book</button>
+</form>
+<table>
+    <thead>
+        <tr>
+            <th>Book ID</th>
+            <th>Title</th>
+            <th>Price</th>
+            <th>Author ID</th>
+            <th>Actions</th>
+        </tr>
+    </thead>
+    <tbody>
+        {% for book in books %}
+        <tr>
+            <td>
+                {{ book.book_id }}
+                <form id="edit-book-{{ book.book_id }}"
+                      method="post"
+                      action="{{ url_for('edit_book',
+                                         book_id=book.book_id) }}">
+                    <input type="hidden" name="csrf_token"
+                           value="{{ csrf_token() }}">
+                </form>
+            </td>
+            <td>
+                <input form="edit-book-{{ book.book_id }}"
+                       name="title" value="{{ book.title }}"
+                       maxlength="200" required
+                       aria-label="Book title">
+            </td>
+            <td>
+                <input form="edit-book-{{ book.book_id }}"
+                       name="price" type="number"
+                       value="{{ '%.2f'|format(book.price) }}"
+                       min="0" max="99999999.99" step="0.01"
+                       required aria-label="Book price">
+            </td>
+            <td>
+                <select form="edit-book-{{ book.book_id }}"
+                        name="author_id" required
+                        aria-label="Book author">
+                    {% for author in authors %}
+                    <option value="{{ author.author_id }}"
+                        {% if author.author_id == book.author_id %}
+                        selected
+                        {% endif %}>
+                        {{ author.author_id }} — {{ author.name }}
+                    </option>
+                    {% endfor %}
+                </select>
+            </td>
+            <td>
+                <button type="submit"
+                        form="edit-book-{{ book.book_id }}">
+                    Save
+                </button>
+
+                <form method="post"
+                      action="{{ url_for('delete_book',
+                                         book_id=book.book_id) }}"
+                      onsubmit="return confirm('Delete this book?');">
+                    <input type="hidden" name="csrf_token"
+                           value="{{ csrf_token() }}">
+                    <button type="submit">Delete</button>
+                </form>
+            </td>
+        </tr>
+        {% endfor %}
+    </tbody>
+</table>
+{% endblock %}

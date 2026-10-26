@@ -1,0 +1,30 @@
+<!doctype html>
+<html lang="en">
+<head>
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <title>Database Lab 3</title>
+    <link rel="stylesheet"
+          href="{{ url_for('static', filename='style.css') }}">
+    <script defer
+            src="{{ url_for('static', filename='validation.js') }}"></script>
+</head>
+<body>
+    <header>
+        <a class="brand" href="{{ url_for('home') }}">My Website</a>
+        {% if session.get('user_id') %}
+        <nav>
+            <a href="{{ url_for('todos') }}">My Tasks</a>
+            |
+            <a href="{{ url_for('library') }}">Library</a>
+        </nav>
+        {% endif %}
+    </header>
+
+    <main>
+        {% block content %}{% endblock %}
+    </main>
+
+    <footer>Database Lab 3 · Authors &amp; Books</footer>
+</body>
+</html>

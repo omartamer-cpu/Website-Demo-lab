@@ -1,0 +1,88 @@
+Q1.1 - Delete a referenced employee
+
+SQL used:
+
+USE company;
+
+INSERT INTO DEPARTMENT
+    (Dnumber, Dname, mgr_ssn, mgr_start_date)
+VALUES
+    (4, 'Research', '111111111', '2026-10-01');
+
+DELETE FROM EMPLOYEE
+WHERE ssn = '111111111';
+
+Result:
+INSERT: 1 row affected.
+DELETE: Error Code 1451.
+Cannot delete or update a parent row:
+a foreign key constraint fails.
+
+Explanation:
+The employee is referenced by DEPARTMENT.mgr_ssn.
+MySQL prevents deletion to preserve referential integrity.
+The employee remains in the database.
+
+Q1.2 - Insert a project with a nonexistent department
+
+SQL used:
+
+USE company;
+
+INSERT INTO PROJECT (Pnumber, Pname, Plocation, Dno)
+VALUES (104, 'Invalid Project', 'Cairo', 99);
+
+Result:
+Error Code: 1452.
+Cannot add or update a child row:
+a foreign key constraint fails.
+
+Explanation:
+PROJECT.Dno references DEPARTMENT.Dnumber.
+Department 99 does not exist, so MySQL rejects the insert
+to preserve referential integrity.
+The project was not added.
+
+Q1.3 - Both mgr_ssn and Dno are NOT NULL
+
+There is a circular dependency:
+- A department requires an employee as its manager.
+- An employee requires a department.
+
+MySQL checks foreign keys immediately, so simply inserting
+both rows inside a transaction does not solve the problem.
+
+Solution:
+1. Create DEPARTMENT with mgr_ssn NOT NULL, but temporarily
+   omit its foreign key to EMPLOYEE.
+2. Create EMPLOYEE with Dno NOT NULL and its foreign key
+   referencing DEPARTMENT.
+3. Insert the department using the planned manager's SSN.
+4. Insert that employee referencing the department.
+5. Add the manager foreign key using ALTER TABLE.
+
+Example SQL for a fresh database:
+
+CREATE TABLE DEPARTMENT (
+    Dnumber INT PRIMARY KEY,
+    mgr_ssn CHAR(9) NOT NULL
+);
+
+CREATE TABLE EMPLOYEE (
+    ssn CHAR(9) PRIMARY KEY,
+    Dno INT NOT NULL,
+    FOREIGN KEY (Dno) REFERENCES DEPARTMENT(Dnumber)
+);
+
+INSERT INTO DEPARTMENT (Dnumber, mgr_ssn)
+VALUES (1, '111111111');
+
+INSERT INTO EMPLOYEE (ssn, Dno)
+VALUES ('111111111', 1);
+
+ALTER TABLE DEPARTMENT
+ADD CONSTRAINT fk_department_manager
+FOREIGN KEY (mgr_ssn) REFERENCES EMPLOYEE(ssn);
+
+The foreign key can now be added because the referenced
+employee exists. Both columns remain NOT NULL.
