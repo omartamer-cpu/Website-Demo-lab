@@ -1,6 +1,11 @@
 """Database Lab 2: plain SQL, server-side sessions, and personal tasks."""
 import os
 import secrets
+import hashlib
+import unicodedata
+import warnings
+from PIL import Image, UnidentifiedImageError
+from werkzeug.exceptions import RequestEntityTooLarge
 from functools import wraps
 from pathlib import Path
 import bcrypt
@@ -236,144 +241,183 @@ def not_found(error):
 def server_error(error):
     return render_template('error.html', message='Something went wrong. Please try again.'), 500
 
+
+# Library validation and optional image uploads.
+app.config['MAX_CONTENT_LENGTH'] = 6 * 1024 * 1024
+UPLOADS = BASE / 'static' / 'uploads'
+UPLOADS.mkdir(parents=True, exist_ok=True)
+
+def clean_text(value):
+    return ' '.join(unicodedata.normalize('NFC', value).split())
+
+def duplicate_key(*values):
+    import json
+    normalized = [clean_text(str(v)).casefold() for v in values]
+    return hashlib.sha256(json.dumps(normalized, ensure_ascii=False).encode()).digest()
+
+def letters_only(value):
+    return bool(value) and any(c.isalpha() for c in value) and all(
+        c.isalpha() or c == ' ' for c in value)
+
+def save_image(upload):
+    if not upload or not upload.filename:
+        return None
+    raw = upload.read(5 * 1024 * 1024 + 1)
+    if len(raw) > 5 * 1024 * 1024:
+        raise ValueError('Each image must be 5 MB or smaller.')
+    from io import BytesIO
+    try:
+        with warnings.catch_warnings():
+            warnings.simplefilter('error', Image.DecompressionBombWarning)
+            with Image.open(BytesIO(raw)) as im:
+                if im.format not in ('JPEG', 'PNG', 'WEBP'):
+                    raise ValueError('Choose a JPG, PNG, or WebP image.')
+                if im.width * im.height > 20_000_000:
+                    raise ValueError('Image is too large; use at most 20 megapixels.')
+                im.load()
+                im.thumbnail((1200, 1200))
+                output = im.convert('RGB')
+                filename = secrets.token_hex(16) + '.jpg'
+                output.save(UPLOADS / filename, 'JPEG', quality=85)
+                return filename
+    except (UnidentifiedImageError, OSError, Image.DecompressionBombError,
+            Image.DecompressionBombWarning):
+        raise ValueError('Upload a valid JPG, PNG, or WebP image.')
+
+def remove_image(filename):
+    # Only delete generated filenames, never a user-supplied path.
+    if filename and len(filename) == 36 and filename.endswith('.jpg'):
+        stem = filename[:-4]
+        if all(c in '0123456789abcdef' for c in stem):
+            (UPLOADS / filename).unlink(missing_ok=True)
+
+@app.errorhandler(RequestEntityTooLarge)
+def upload_too_large(error):
+    return 'Upload too large. Choose an image under 5 MB, then go back.', 413
+
 @app.get('/library')
 @login_required
 def library():
-    authors = library_query(
-        'SELECT author_id, name, country FROM AUTHOR ORDER BY author_id'
-    )
-    books = library_query(
-        'SELECT book_id, title, price, author_id FROM BOOK ORDER BY book_id'
-    )
-    return render_template(
-        'library.html', authors=authors, books=books
-    )
-@app.post('/authors/add')
-@login_required
-def add_author():
-    name = request.form.get('name', '').strip()
-    country = request.form.get('country', '').strip()
+    authors = library_query('SELECT author_id, name, country, photo FROM AUTHOR ORDER BY author_id')
+    books = library_query('SELECT book_id, title, price, author_id, cover FROM BOOK ORDER BY book_id')
+    return render_template('library.html', authors=authors, books=books)
 
-    if not name or len(name) > 100 or len(country) > 100:
-        flash('Enter an author name and use at most 100 characters per field.')
-        return redirect(url_for('library'))
+def author_values():
+    name = clean_text(request.form.get('name', ''))
+    country = clean_text(request.form.get('country', ''))
+    if not letters_only(name) or len(name) > 100:
+        raise ValueError('Author name must contain letters and spaces only (up to 100 characters).')
+    if country and (not letters_only(country) or len(country) > 100):
+        raise ValueError('Country must contain letters and spaces only (up to 100 characters).')
+    return name, country
 
-    library_query(
-        'INSERT INTO AUTHOR (name, country) VALUES (%s, %s)',
-        (name, country),
-        write=True
-    )
-    flash('Author added.')
-    return redirect(url_for('library'))
-@app.post('/books/add')
-@login_required
-def add_book():
-    title = request.form.get('title', '').strip()
-
+def book_values():
+    title = clean_text(request.form.get('title', ''))
     try:
         price = Decimal(request.form.get('price', ''))
         author_id = int(request.form.get('author_id', ''))
-
-        if (
-            not title or len(title) > 200
-            or not price.is_finite()
+        if (not title or len(title) > 200 or not price.is_finite()
             or price < 0 or price > Decimal('99999999.99')
-            or price != price.quantize(Decimal('0.01'))
-        ):
+            or price != price.quantize(Decimal('0.01')) or author_id <= 0):
             raise ValueError
     except (InvalidOperation, ValueError):
-        flash('Enter a title, a valid price, and an author.')
-        return redirect(url_for('library'))
+        raise ValueError('Enter a title, a valid price with at most two decimal places, and an author.')
+    return title, price, author_id
 
+def save_library_record(kind, record_id=None):
+    author = kind == 'author'
+    table, pk, image_col = ('AUTHOR', 'author_id', 'photo') if author else ('BOOK', 'book_id', 'cover')
+    old = None
+    if record_id is not None:
+        rows = library_query(f'SELECT {image_col} FROM {table} WHERE {pk} = %s', (record_id,))
+        if not rows:
+            abort(404)
+        old = rows[0][image_col]
+    new = None
     try:
-        library_query(
-            'INSERT INTO BOOK (title, price, author_id) VALUES (%s, %s, %s)',
-            (title, price, author_id),
-            write=True
-        )
+        values = author_values() if author else book_values()
+        key = duplicate_key(*values) if author else duplicate_key(values[0], values[2])
+        duplicates = library_query(f'SELECT {pk} FROM {table} WHERE duplicate_key = %s', (key,))
+        if any(row[pk] != record_id for row in duplicates):
+            raise ValueError('This author name and country already exist.' if author
+                             else 'This title already exists for the selected author.')
+        new = save_image(request.files.get(image_col))
+        image_name = new or old
+        if author:
+            fields = 'name = %s, country = %s, duplicate_key = %s, photo = %s'
+            insert_fields = 'name, country, duplicate_key, photo'
+            params = (*values, key, image_name)
+        else:
+            fields = 'title = %s, price = %s, author_id = %s, duplicate_key = %s, cover = %s'
+            insert_fields = 'title, price, author_id, duplicate_key, cover'
+            params = (*values, key, image_name)
+        if record_id is None:
+            placeholders = ', '.join(['%s'] * len(params))
+            library_query(f'INSERT INTO {table} ({insert_fields}) VALUES ({placeholders})', params, write=True)
+        else:
+            library_query(f'UPDATE {table} SET {fields} WHERE {pk} = %s', (*params, record_id), write=True)
+    except ValueError as exc:
+        remove_image(new)
+        flash(str(exc))
     except pymysql.err.IntegrityError as exc:
-        if exc.args[0] != 1452:
+        remove_image(new)
+        if exc.args[0] == 1062:
+            flash('That author name and country already exist.' if author else 'That book title and author already exist.')
+        elif exc.args[0] == 1452:
+            flash('The selected author no longer exists.')
+        else:
             raise
-        flash('That author no longer exists. Choose another author.')
+    except Exception:
+        remove_image(new)
+        raise
     else:
-        flash('Book added.')
-
+        if new:
+            remove_image(old)
+        flash(kind.capitalize() + (' added.' if record_id is None else ' updated.'))
     return redirect(url_for('library'))
+
+@app.post('/authors/add')
+@login_required
+def add_author():
+    return save_library_record('author')
 
 @app.post('/authors/<int:author_id>/edit')
 @login_required
 def edit_author(author_id):
-    name = request.form.get('name', '').strip()
-    country = request.form.get('country', '').strip()
+    return save_library_record('author', author_id)
 
-    if not name or len(name) > 100 or len(country) > 100:
-        flash('Enter a name and use at most 100 characters per field.')
-        return redirect(url_for('library'))
+@app.post('/books/add')
+@login_required
+def add_book():
+    return save_library_record('book')
 
-    library_query(
-        'UPDATE AUTHOR SET name = %s, country = %s WHERE author_id = %s',
-        (name, country, author_id),
-        write=True
-    )
-    flash('Author updated.')
-    return redirect(url_for('library'))
-
+@app.post('/books/<int:book_id>/edit')
+@login_required
+def edit_book(book_id):
+    return save_library_record('book', book_id)
 
 @app.post('/authors/<int:author_id>/delete')
 @login_required
 def delete_author(author_id):
-    library_query(
-        'DELETE FROM AUTHOR WHERE author_id = %s',
-        (author_id,),
-        write=True
-    )
+    authors = library_query('SELECT photo FROM AUTHOR WHERE author_id = %s', (author_id,))
+    if not authors:
+        abort(404)
+    books = library_query('SELECT cover FROM BOOK WHERE author_id = %s', (author_id,))
+    library_query('DELETE FROM AUTHOR WHERE author_id = %s', (author_id,), write=True)
+    remove_image(authors[0]['photo'])
+    for book in books:
+        remove_image(book['cover'])
     flash('Author and their books deleted.')
     return redirect(url_for('library'))
-@app.post('/books/<int:book_id>/edit')
-@login_required
-def edit_book(book_id):
-    title = request.form.get('title', '').strip()
-
-    try:
-        price = Decimal(request.form.get('price', ''))
-        author_id = int(request.form.get('author_id', ''))
-
-        if (
-            not title or len(title) > 200
-            or not price.is_finite()
-            or price < 0 or price > Decimal('99999999.99')
-            or price != price.quantize(Decimal('0.01'))
-        ):
-            raise ValueError
-    except (InvalidOperation, ValueError):
-        flash('Enter a title, a valid price, and an author.')
-        return redirect(url_for('library'))
-
-    try:
-        library_query(
-            'UPDATE BOOK SET title = %s, price = %s, '
-            'author_id = %s WHERE book_id = %s',
-            (title, price, author_id, book_id),
-            write=True
-        )
-    except pymysql.err.IntegrityError as exc:
-        if exc.args[0] != 1452:
-            raise
-        flash('That author no longer exists. Choose another author.')
-    else:
-        flash('Book updated.')
-
-    return redirect(url_for('library'))
-
 
 @app.post('/books/<int:book_id>/delete')
 @login_required
 def delete_book(book_id):
-    library_query(
-        'DELETE FROM BOOK WHERE book_id = %s',
-        (book_id,),
-        write=True
-    )
+    books = library_query('SELECT cover FROM BOOK WHERE book_id = %s', (book_id,))
+    if not books:
+        abort(404)
+    library_query('DELETE FROM BOOK WHERE book_id = %s', (book_id,), write=True)
+    remove_image(books[0]['cover'])
     flash('Book deleted.')
     return redirect(url_for('library'))
 

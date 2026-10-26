@@ -35,3 +35,12 @@ th, td {
 th {
     font-weight: 700;
 }
+/* Library forms and image previews */
+.library-table-wrap { overflow-x: auto; }
+.library-image { width: 70px; height: 90px; object-fit: cover; border-radius: 6px; }
+.library-photo { height: 70px; }
+.library-form { margin-bottom: 24px; }
+.library-table input:not([type="file"]) { min-width: 130px; }
+.library-table input[type="file"] { max-width: 200px; }
+.library-table select { max-width: 220px; }
+.library-message { padding: 10px; border: 1px solid #cbd5ce; }
