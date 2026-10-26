@@ -4,6 +4,14 @@
     <meta charset="utf-8">
     <meta name="viewport" content="width=device-width, initial-scale=1">
     <title>Database Lab 3</title>
+    <script>
+        try {
+            document.documentElement.dataset.theme =
+                localStorage.getItem('tasks-theme') === 'dark' ? 'dark' : 'light';
+        } catch (error) {
+            document.documentElement.dataset.theme = 'light';
+        }
+    </script>
     <link rel="stylesheet"
           href="{{ url_for('static', filename='style.css') }}">
     <script defer
@@ -17,6 +25,7 @@
             <a href="{{ url_for('todos') }}">My Tasks</a>
             |
             <a href="{{ url_for('library') }}">Library</a>
+            <button type="button" id="theme-toggle" aria-pressed="false">Dark mode</button>
         </nav>
         {% endif %}
     </header>
@@ -26,5 +35,28 @@
     </main>
 
     <footer>Database Lab 3 · Authors &amp; Books</footer>
+    <script>
+    (function () {
+        const root = document.documentElement;
+        const button = document.getElementById('theme-toggle');
+        function applyTheme(dark) {
+            root.dataset.theme = dark ? 'dark' : 'light';
+            if (button) {
+                button.textContent = dark ? 'Light mode' : 'Dark mode';
+                button.setAttribute('aria-pressed', String(dark));
+            }
+        }
+        applyTheme(root.dataset.theme === 'dark');
+        if (button) button.addEventListener('click', function () {
+            const dark = root.dataset.theme !== 'dark';
+            applyTheme(dark);
+            try { localStorage.setItem('tasks-theme', dark ? 'dark' : 'light'); }
+            catch (error) {}
+        });
+        window.addEventListener('storage', function (event) {
+            if (event.key === 'tasks-theme') applyTheme(event.newValue === 'dark');
+        });
+    })();
+    </script>
 </body>
 </html>

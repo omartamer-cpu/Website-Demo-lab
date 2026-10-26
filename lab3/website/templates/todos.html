@@ -1,4 +1,4 @@
-{% extends 'base.html' %}{% block content %}<section class="card list-card"><div class="list-heading"><div><p class="eyebrow">MAKE TODAY COUNT</p><h1>Hi, {{ session.name }}</h1><p class="muted">Your tasks, your pace.</p></div><button type="button" id="theme-toggle" aria-pressed="false">Dark mode</button><form method="post" action="{{ url_for('logout') }}"><input type="hidden" name="csrf_token" value="{{ csrf_token() }}"><button>Log out</button></form></div>
+{% extends 'base.html' %}{% block content %}<section class="card list-card"><div class="list-heading"><div><p class="eyebrow">MAKE TODAY COUNT</p><h1>Hi, {{ session.name }}</h1><p class="muted">Your tasks, your pace.</p></div><form method="post" action="{{ url_for('logout') }}"><input type="hidden" name="csrf_token" value="{{ csrf_token() }}"><button>Log out</button></form></div>
 {% for message in get_flashed_messages() %}<p class="success" role="status">{{ message }}</p>{% endfor %}
 <form class="add-form" method="post" action="{{ url_for('add_todo') }}" data-form="todo" novalidate><input type="hidden" name="csrf_token" value="{{ csrf_token() }}"><label for="new-title">What needs to be done?</label><div class="input-row"><input id="new-title" name="title" placeholder="Write a task…" value="{{ add_title }}"><button class="primary">Add task</button></div><p class="error" data-error="title">{{ errors.get('title','') if edit_id is none else '' }}</p></form>
 <nav class="task-filters" aria-label="Filter tasks">
@@ -12,21 +12,6 @@
 <form method="post" action="{{ url_for('delete_todo', todo_id=row.todo_id) }}" data-delete><input type="hidden" name="csrf_token" value="{{ csrf_token() }}"><button class="danger">Delete</button></form></article>{% else %}<div class="empty"><span>☀</span><h2>A fresh start</h2><p class="muted">No tasks yet. Add your first one above.</p></div>{% endfor %}</section>
 <script>
 (function () {
-    const root = document.documentElement;
-    const themeButton = document.getElementById('theme-toggle');
-    function setTheme(dark) {
-        root.dataset.theme = dark ? 'dark' : 'light';
-        themeButton.textContent = dark ? 'Light mode' : 'Dark mode';
-        themeButton.setAttribute('aria-pressed', String(dark));
-    }
-    let savedTheme;
-    try { savedTheme = localStorage.getItem('tasks-theme'); } catch (error) {}
-    setTheme(savedTheme === 'dark');
-    themeButton.addEventListener('click', function () {
-        const dark = root.dataset.theme !== 'dark';
-        setTheme(dark);
-        try { localStorage.setItem('tasks-theme', dark ? 'dark' : 'light'); } catch (error) {}
-    });
     const tasks = Array.from(document.querySelectorAll('.task'));
     const filters = document.querySelectorAll('[data-filter]');
     filters.forEach(function (button) {
