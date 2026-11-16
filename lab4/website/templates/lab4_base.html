@@ -1,0 +1,13 @@
+{% extends 'base.html' %}
+{% block content %}
+<h1>{{ title }}</h1>
+<nav class="lab4-menu">
+  <a href="{{ url_for('lab4_search') }}">F2.1 Search</a> |
+  <a href="{{ url_for('lab4_catalogue') }}">F2.2 Catalogue</a> |
+  <a href="{{ url_for('lab4_reports') }}">F2.3 Reports</a> |
+  <a href="{{ url_for('lab4_loans') }}">F2.4 Loans</a> |
+  <a href="{{ url_for('lab4_most_borrowed') }}">F2.5 Most borrowed</a> |
+  <a href="{{ url_for('lab4_authors_books') }}">F2.6 Authors and books</a>
+</nav>
+{% block lab4_body %}<p>Choose a page from the menu above.</p>{% endblock %}
+{% endblock %}

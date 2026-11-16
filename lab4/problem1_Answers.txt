@@ -1,0 +1,288 @@
+PROBLEM 1 - ANSWERS (SQL used and output / error)
+Database built with problem1_DDL.sql + problem1_DML.sql, then every statement below was run in order in the mysql client.
+(MySQL Workbench 'safe update mode' would block DELETE/UPDATE without a key in WHERE - Error 1175 - the client does not.)
+
+
+-- ===== A. CHANGE THE DATA =====
+
+-- Q1.1 INSERT
+SQL> INSERT INTO employee VALUES ('777777777','Hany','Mostafa','1994-04-04','Alexandria','M',3300,'111111111',1);
+OK, 1 row(s) affected
+SQL> INSERT INTO project VALUES (5,'Training','Alexandria',1);
+OK, 1 row(s) affected
+SQL> SELECT * FROM employee WHERE ssn='777777777';
++-----------+-------+---------+------------+------------+--------+---------+-----------+-----+
+| ssn       | fname | lname   | bdate      | address    | gender | salary  | super_ssn | Dno |
++-----------+-------+---------+------------+------------+--------+---------+-----------+-----+
+| 777777777 | Hany  | Mostafa | 1994-04-04 | Alexandria | M      | 3300.00 | 111111111 | 1   |
++-----------+-------+---------+------------+------------+--------+---------+-----------+-----+
+1 row(s)
+SQL> SELECT * FROM project WHERE Pnumber=5;
++---------+----------+------------+-----+
+| Pnumber | Pname    | Plocation  | Dno |
++---------+----------+------------+-----+
+| 5       | Training | Alexandria | 1   |
++---------+----------+------------+-----+
+1 row(s)
+
+-- Q1.1 employee with a Dno that does not exist -> foreign key error
+SQL> INSERT INTO employee VALUES ('888888888','Bad','Dept','1990-01-01','Cairo','M',3000,NULL,99);
+ERROR 1452: Cannot add or update a child row: a foreign key constraint fails (`company`.`employee`, CONSTRAINT `employee_ibfk_2` FOREIGN KEY (`Dno`) REFERENCES `department` (`Dnumber`))
+
+-- Q1.2 (a) 10% raise for department 2
+SQL> UPDATE employee SET salary = salary * 1.10 WHERE Dno = 2;
+OK, 3 row(s) affected
+SQL> SELECT ssn, fname, salary FROM employee WHERE Dno = 2;
++-----------+-------+---------+
+| ssn       | fname | salary  |
++-----------+-------+---------+
+| 222222222 | Sara  | 5720.00 |
+| 333333333 | Omar  | 4950.00 |
+| 444444444 | Mona  | 4180.00 |
++-----------+-------+---------+
+3 row(s)
+
+-- Q1.2 (b) change a project location
+SQL> UPDATE project SET Plocation = 'Giza' WHERE Pnumber = 1;
+OK, 1 row(s) affected
+SQL> SELECT * FROM project WHERE Pnumber = 1;
++---------+---------+-----------+-----+
+| Pnumber | Pname   | Plocation | Dno |
++---------+---------+-----------+-----+
+| 1       | Website | Giza      | 2   |
++---------+---------+-----------+-----+
+1 row(s)
+
+-- Q1.2 (c) department 99 does not exist -> error
+SQL> UPDATE employee SET Dno = 99 WHERE ssn = '444444444';
+ERROR 1452: Cannot add or update a child row: a foreign key constraint fails (`company`.`employee`, CONSTRAINT `employee_ibfk_2` FOREIGN KEY (`Dno`) REFERENCES `department` (`Dnumber`))
+
+-- Q1.3 (a) delete one dependent and one works_on row
+SQL> DELETE FROM dependent WHERE essn='222222222' AND dependent_name='Nour';
+OK, 1 row(s) affected
+SQL> DELETE FROM works_on WHERE essn='555555555' AND Pno=1;
+OK, 1 row(s) affected
+
+-- Q1.3 (b) department 3 still has an employee -> error
+SQL> DELETE FROM department WHERE Dnumber = 3;
+ERROR 1451: Cannot delete or update a parent row: a foreign key constraint fails (`company`.`employee`, CONSTRAINT `employee_ibfk_2` FOREIGN KEY (`Dno`) REFERENCES `department` (`Dnumber`))
+-- correct order (inside a transaction, rolled back so the data stays for Part B):
+-- 1) children first: move (or delete) the employees of the department
+-- 2) then delete the department
+SQL> START TRANSACTION;
+OK, 0 row(s) affected
+SQL> UPDATE employee SET Dno = 2 WHERE Dno = 3;
+OK, 1 row(s) affected
+SQL> DELETE FROM department WHERE Dnumber = 3;
+OK, 1 row(s) affected
+SQL> SELECT Dnumber, Dname FROM department;
++---------+-----------+
+| Dnumber | Dname     |
++---------+-----------+
+| 1       | HR        |
+| 2       | IT        |
+| 4       | Marketing |
++---------+-----------+
+3 row(s)
+SQL> ROLLBACK;
+OK, 0 row(s) affected
+SQL> SELECT Dnumber, Dname FROM department;
++---------+-----------+
+| Dnumber | Dname     |
++---------+-----------+
+| 1       | HR        |
+| 2       | IT        |
+| 4       | Marketing |
+| 3       | Sales     |
++---------+-----------+
+4 row(s)
+
+-- Q1.3 (c) DELETE without WHERE inside a transaction
+SQL> START TRANSACTION;
+OK, 0 row(s) affected
+SQL> DELETE FROM dependent;
+OK, 2 row(s) affected
+SQL> SELECT * FROM dependent;
++------+----------------+--------+-------+--------------+
+| essn | dependent_name | gender | bdate | relationship |
++------+----------------+--------+-------+--------------+
++------+----------------+--------+-------+--------------+
+0 row(s)
+SQL> ROLLBACK;
+OK, 0 row(s) affected
+SQL> SELECT * FROM dependent;
++-----------+----------------+--------+------------+--------------+
+| essn      | dependent_name | gender | bdate      | relationship |
++-----------+----------------+--------+------------+--------------+
+| 111111111 | Huda           | F      | 1982-08-20 | Spouse       |
+| 222222222 | Adam           | M      | 2015-05-01 | Son          |
++-----------+----------------+--------+------------+--------------+
+2 row(s)
+
+-- ===== B. SEARCH THE DATA =====
+
+-- Q1.4 (a)
+SQL> SELECT fname, lname, salary FROM employee
+     WHERE salary BETWEEN 3000 AND 6000 AND address LIKE '%Alexandria%'
+     ORDER BY salary DESC;
++-------+---------+---------+
+| fname | lname   | salary  |
++-------+---------+---------+
+| Omar  | Khaled  | 4950.00 |
+| Hany  | Mostafa | 3300.00 |
++-------+---------+---------+
+2 row(s)
+
+-- Q1.4 (b)
+SQL> SELECT * FROM employee WHERE super_ssn IS NULL;
++-----------+-------+--------+------------+------------+--------+---------+-----------+-----+
+| ssn       | fname | lname  | bdate      | address    | gender | salary  | super_ssn | Dno |
++-----------+-------+--------+------------+------------+--------+---------+-----------+-----+
+| 111111111 | Ahmed | Hassan | 1980-03-12 | Alexandria | M      | 6500.00 | NULL      | 1   |
++-----------+-------+--------+------------+------------+--------+---------+-----------+-----+
+1 row(s)
+
+-- Q1.4 (c)
+SQL> SELECT DISTINCT Dno FROM employee;
++-----+
+| Dno |
++-----+
+| 1   |
+| 2   |
+| 3   |
++-----+
+3 row(s)
+
+-- Q1.5
+SQL> SELECT COUNT(*) AS employees, SUM(salary) AS total_salary, AVG(salary) AS avg_salary,
+            MIN(salary) AS min_salary, MAX(salary) AS max_salary
+     FROM employee;
++-----------+--------------+-------------+------------+------------+
+| employees | total_salary | avg_salary  | min_salary | max_salary |
++-----------+--------------+-------------+------------+------------+
+| 7         | 30350.00     | 4335.714286 | 2800.00    | 6500.00    |
++-----------+--------------+-------------+------------+------------+
+1 row(s)
+
+-- Q1.6
+SQL> SELECT Dno, COUNT(*) AS employees, AVG(salary) AS avg_salary
+     FROM employee GROUP BY Dno;
++-----+-----------+-------------+
+| Dno | employees | avg_salary  |
++-----+-----------+-------------+
+| 1   | 3         | 4233.333333 |
+| 2   | 3         | 4950.000000 |
+| 3   | 1         | 2800.000000 |
++-----+-----------+-------------+
+3 row(s)
+
+-- Q1.7 (a)
+SQL> SELECT Dno, COUNT(*) AS employees FROM employee GROUP BY Dno HAVING COUNT(*) > 2;
++-----+-----------+
+| Dno | employees |
++-----+-----------+
+| 1   | 3         |
+| 2   | 3         |
++-----+-----------+
+2 row(s)
+
+-- Q1.7 (b) only employees with salary > 3000
+SQL> SELECT Dno, COUNT(*) AS employees FROM employee WHERE salary > 3000 GROUP BY Dno HAVING COUNT(*) > 2;
++-----+-----------+
+| Dno | employees |
++-----+-----------+
+| 2   | 3         |
++-----+-----------+
+1 row(s)
+-- WHERE vs HAVING: WHERE filters single rows before grouping (no aggregates);
+-- HAVING filters whole groups after grouping and can use aggregates such as COUNT(*).
+
+-- Q1.8
+SQL> SELECT CONCAT(e.fname,' ',e.lname) AS full_name, d.Dname
+     FROM employee e JOIN department d ON e.Dno = d.Dnumber;
++---------------+-------+
+| full_name     | Dname |
++---------------+-------+
+| Ahmed Hassan  | HR    |
+| Sara Ali      | IT    |
+| Omar Khaled   | IT    |
+| Mona Samir    | IT    |
+| Youssef Nabil | Sales |
+| Laila Farid   | HR    |
+| Hany Mostafa  | HR    |
++---------------+-------+
+7 row(s)
+
+-- Q1.9
+SQL> SELECT e.lname, p.Pname, w.hours
+     FROM works_on w
+     JOIN employee e ON w.essn = e.ssn
+     JOIN project p  ON w.Pno = p.Pnumber;
++--------+-------------+-------+
+| lname  | Pname       | hours |
++--------+-------------+-------+
+| Ali    | Website     | 12.0  |
+| Khaled | Website     | 15.0  |
+| Ali    | Mobile App  | 10.0  |
+| Khaled | Mobile App  | 9.0   |
+| Samir  | Mobile App  | 8.0   |
+| Hassan | Recruitment | 6.0   |
+| Farid  | Recruitment | 14.0  |
++--------+-------------+-------+
+7 row(s)
+
+-- Q1.10 (a)
+SQL> SELECT d.Dnumber, d.Dname, COUNT(e.ssn) AS employees
+     FROM department d LEFT JOIN employee e ON e.Dno = d.Dnumber
+     GROUP BY d.Dnumber, d.Dname;
++---------+-----------+-----------+
+| Dnumber | Dname     | employees |
++---------+-----------+-----------+
+| 1       | HR        | 3         |
+| 2       | IT        | 3         |
+| 3       | Sales     | 1         |
+| 4       | Marketing | 0         |
++---------+-----------+-----------+
+4 row(s)
+
+-- Q1.10 (b)
+SQL> SELECT p.Pnumber, p.Pname
+     FROM project p LEFT JOIN works_on w ON w.Pno = p.Pnumber
+     WHERE w.essn IS NULL;
++---------+-------------+
+| Pnumber | Pname       |
++---------+-------------+
+| 4       | Ad Campaign |
+| 5       | Training    |
++---------+-------------+
+2 row(s)
+
+-- Q1.11 (LEFT self join so the employee without a supervisor still appears)
+SQL> SELECT CONCAT(e.fname,' ',e.lname) AS employee, CONCAT(s.fname,' ',s.lname) AS supervisor
+     FROM employee e LEFT JOIN employee s ON e.super_ssn = s.ssn;
++---------------+--------------+
+| employee      | supervisor   |
++---------------+--------------+
+| Ahmed Hassan  | NULL         |
+| Sara Ali      | Ahmed Hassan |
+| Omar Khaled   | Sara Ali     |
+| Mona Samir    | Sara Ali     |
+| Youssef Nabil | Ahmed Hassan |
+| Laila Farid   | Ahmed Hassan |
+| Hany Mostafa  | Ahmed Hassan |
++---------------+--------------+
+7 row(s)
+
+-- Q1.12
+SQL> SELECT p.Pname, SUM(w.hours) AS total_hours
+     FROM project p JOIN works_on w ON w.Pno = p.Pnumber
+     GROUP BY p.Pnumber, p.Pname
+     HAVING SUM(w.hours) > 20
+     ORDER BY total_hours DESC;
++------------+-------------+
+| Pname      | total_hours |
++------------+-------------+
+| Mobile App | 27.0        |
+| Website    | 27.0        |
++------------+-------------+
+2 row(s)

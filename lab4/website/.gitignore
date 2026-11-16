@@ -1,0 +1,6 @@
+.venv/
+.env
+__pycache__/
+instance/
+flask_session/
+database/Schema.sql.txt

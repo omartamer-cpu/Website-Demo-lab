@@ -1,0 +1,16 @@
+{% extends 'lab4_base.html' %}
+{% block lab4_body %}
+  {% for heading, rows in sections %}
+    <h2>{{ heading }}</h2>
+    {% if rows %}
+      <table>
+        <tr>{% for col in rows[0].keys() %}<th>{{ col }}</th>{% endfor %}</tr>
+        {% for row in rows %}
+          <tr>{% for value in row.values() %}<td>{{ value if value is not none else '' }}</td>{% endfor %}</tr>
+        {% endfor %}
+      </table>
+    {% else %}
+      <p>No rows.</p>
+    {% endif %}
+  {% endfor %}
+{% endblock %}
